@@ -1,4 +1,4 @@
-Frontender
+Fronter
 ================
 Front-end development tools package. 
 

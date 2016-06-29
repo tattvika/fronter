@@ -1,18 +1,74 @@
-var elixir = require('laravel-elixir');
+var gulp        = require('gulp');
+var gutil       = require('gulp-util');
+var sass        = require('gulp-sass');
+var source      = require('vinyl-source-stream');
+var babelify    = require('babelify');
+var watchify    = require('watchify');
+var exorcist    = require('exorcist');
+var browserify  = require('browserify');
+var browserSync = require('browser-sync').create();
 
-require('laravel-elixir-browserify-official');
+var src = {
+    scss: 'app/scss/*.scss',
+    css:  'app/css',
+    html: 'app/*.html'
+};
 
-/*
- |--------------------------------------------------------------------------
- | Elixir Asset Management
- |--------------------------------------------------------------------------
- |
- | Elixir provides a clean, fluent API for defining some basic Gulp tasks
- | for your Laravel application. By default, we are compiling the Sass
- | file for our application, as well as publishing vendor resources.
- |
+// Input file.
+watchify.args.debug = true;
+var bundler = watchify(browserify('./app/js/app.js', watchify.args));
+
+// Babel transform
+bundler.transform(babelify.configure({
+    sourceMapRelative: 'app/js'
+}));
+
+// On updates recompile
+bundler.on('update', bundle);
+
+function bundle() {
+
+    gutil.log('Compiling JS...');
+
+    return bundler.bundle()
+        .on('error', function (err) {
+            gutil.log(err.message);
+            browserSync.notify("Browserify Error!");
+            this.emit("end");
+        })
+        .pipe(exorcist('app/js/dist/bundle.js.map'))
+        .pipe(source('bundle.js'))
+        .pipe(gulp.dest('./app/js/dist'))
+        .pipe(browserSync.stream({once: true}));
+}
+
+/**
+ * Gulp task alias
  */
-
-elixir(function(mix) {
-    mix.browserify('app.js', 'public/js/app.js');
+gulp.task('bundle', function () {
+    return bundle();
 });
+
+
+
+gulp.task('sass', function() {
+    return gulp.src(src.scss)
+        .pipe(sass())
+        .pipe(gulp.dest(src.css))
+        .pipe(browserSync.reload({stream: true}));
+});
+
+
+gulp.task('serve', ['bundle', 'sass'], function () {
+    browserSync.init({
+        server: "./app"
+    });
+
+    gulp.watch(src.scss, ['sass']);
+    gulp.watch(src.html).on('change', browserSync.reload);
+});
+
+/**
+ * First bundle, then serve from the ./app directory
+ */
+gulp.task('default', ['serve']);

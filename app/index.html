@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>Browsersync Browserify Example</title>
+    <link rel='stylesheet' href='css/main.css'>
+</head>
+<body>
+	<div id="app">
+    	<h1>{{header}}</h1>
+    	<div>
+    		<ul>
+    			<li v-for="item in included">
+    				{{item.body}}
+    			</li>
+    		</ul>
+    	</div>
+    	<div>Package {{created}}</div>
+	</div>
+    <script src="js/dist/bundle.js"></script>
+</body>
+</html>
